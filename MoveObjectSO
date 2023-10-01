@@ -1,0 +1,30 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using System;
+
+//ダンジョン内で移動するオブジェクトが基本的に持つデータ群
+[Serializable]
+public class MoveObjectSO : ScriptableObject
+{
+    public string Name;
+
+    [Header("説明文")]
+    [TextArea]
+    public string Description;
+
+    [Header("通常移動速度")]
+    public float MovementSpeed;
+    
+    [Header("攻撃中移動速度")]
+    public float AttackingMovementSpeed;
+
+
+    [Header("残存時間")]
+    public float LifeTime;
+
+    [Header("サイズ倍率")]
+    public float Scale;
+
+
+}
