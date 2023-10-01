@@ -1,0 +1,44 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using System;
+
+[Serializable]
+[CreateAssetMenu]
+public class GlobalSO : ScriptableObject
+{
+    public Vector3 playerCursorPosition;
+    public Vector3 playerCharacterPosition;
+
+    public int playerSelectCharaID;
+    public int playerSelectWeaponID;
+
+    public int score;
+    public int highScore;
+
+    //MyScriptableObjectが保存してある場所のパス
+    public const string PATH = "ScriptableObjects/GlobalSO";
+
+    //MyScriptableObjectの実体
+    private static GlobalSO _entity;
+    public static GlobalSO Entity
+    {
+        get
+        {
+            //初アクセス時にロードする
+            if (_entity == null)
+            {
+                _entity = Resources.Load<GlobalSO>(PATH);
+
+                //ロード出来なかった場合はエラーログを表示
+                if (_entity == null)
+                {
+                    Debug.LogError(PATH + " not found");
+                }
+            }
+
+            return _entity;
+        }
+    }
+
+}
