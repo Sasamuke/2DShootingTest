@@ -32,11 +32,17 @@ public class Dungeon_WeaponManager : MonoBehaviour
     private void Start()
     {
 
-        //アセットロード
-        var _ = LoadWeaponImage("WeaponImage_" + GlobalSO.Entity.playerSelectWeaponID);
 
         weaponSO = WeaponDatabase.Entity.weaponDataList[GlobalSO.Entity.playerSelectWeaponID];
 
+        Debug.Log($"武器名：{weaponSO.Name}");
+
+        /*
+        
+        
+        //アセットロード
+        var _ = LoadWeaponImage("WeaponImage_" + GlobalSO.Entity.playerSelectWeaponID);
+         
         //武器の位置とサイズを初期化
         weaponImageTransform = weaponImage.GetComponent<Transform>();
         DebugLogger.Log("武器の画像Transform取得完了");
@@ -47,10 +53,11 @@ public class Dungeon_WeaponManager : MonoBehaviour
 
         //弾体発射用のGameObjectを生成する
         OffsetWeaponPosition();
+        */
     }
     #endregion
 
-
+    /*
 
     #region//FixedUpdate()
     private void FixedUpdate()
@@ -152,3 +159,168 @@ public class Dungeon_WeaponManager : MonoBehaviour
     }
     #endregion
 
+
+
+    /*
+
+    #region//ウェポンプレハブのコンポーネント取得用変数を定義
+    protected Transform weaponTransform = null;
+    protected Transform weaponImageTransform = null;  //武器画像
+    #endregion
+
+
+    #region//スクリプト取得処理
+    [SerializeField] GameManager _gameManager = null;
+    [SerializeField] Dungeon_PlayerManager _playerManager = null;
+    [SerializeField] Dungeon_BulletManager _bulletManager = null;
+    #endregion
+
+
+    #region//GameObjectを取得
+    public GameObject weaponImagePrefab;
+    public GameObject playerBulletLaunchPointPrefab;
+    #endregion
+
+
+    #region//Start
+    private void Start()
+    {
+
+        //プレイヤーゲームオブジェクトからコンポーネントを取得
+        weaponTransform = GetComponent<Transform>();
+        weaponImageTransform = weaponImagePrefab.GetComponent<Transform>();
+
+        playerBulletLaunchPointPositions = new Vector3[1];
+        playerBulletLaunchPointPositions[0] = new Vector3(0.05f, 0f, 0);
+
+        //武器の画像と、弾丸発射座標を修正
+        OffsetWeaponPosition(weaponImageTransform, weaponDistanceFromPlayer , playerBulletLaunchPointPositions);
+    }
+    #endregion
+
+
+    #region//Update
+    private void Update()
+    {
+        //マウスとプレイヤーの位置を取得して、プレイヤーを中心に武器を回転させる
+        Vector3 mousePosition = _gameManager.GetMousePosition3D();
+        Vector3 playerPosition = _playerManager.GetPlayerPosition3D();
+
+        RotateWeapon(mousePosition , playerPosition);
+
+        TrackingPlayerPosition(weaponTransform, playerPosition);
+
+    }
+    #endregion
+
+
+
+    #region//RotateWeapon(武器回転)
+    //武器の位置をプレイヤーを中心に、マウスの方向を向くように回転させる
+    public void RotateWeapon(Vector3 mousePosition , Vector3 playerPosition)
+    {
+        
+        //プレイヤーキャラクターの3D座標と、マウスの位置の差分を取得する
+        float deltaX = mousePosition.x - playerPosition.x;  //X座標差分
+        float deltaY = mousePosition.y - playerPosition.y;  //Y座標差分
+
+        float rad = Mathf.Atan2(deltaY, deltaX);            //ラジアン角を取得
+        float degree = rad * Mathf.Rad2Deg;                 //角度を算出
+
+        //Debug.Log("マウスとプレイヤーの角度：" + degree);
+
+        //プレイヤーの位置情報を基準に、武器オブジェクトそのものを回転させる
+        weaponTransform.rotation = Quaternion.Euler(0f, 0f, degree);    //自転    
+
+        //角度が180 ~ 270の時、武器イメージを反転させる
+        Vector3 weaponImageScale = weaponImageTransform.localScale;
+        bool isReverse = false;
+        if (IsReverseWeapon(degree))
+        {
+            if (weaponImageScale.y > 0)
+            {
+                isReverse = true;
+            }
+        }
+        else
+        {
+            if (weaponImageScale.y < 0)
+            {
+                isReverse = true;
+            }
+        }
+
+        if (isReverse)
+        {
+            weaponImageScale.y = -1 * weaponImageScale.y;
+            weaponImageTransform.localScale = weaponImageScale;
+        }
+
+    }
+    #endregion
+
+
+    #region//IsReverseWeapon()
+    protected bool IsReverseWeapon(float degree)
+    {
+        if (90 < degree || degree < -90)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    #endregion
+
+
+
+    #region//OffsetWeaponPosition(武器画像と弾丸発射座標の位置調整)
+    private void OffsetWeaponPosition(Transform transform,Vector3 offsetPosition , Vector3[] bulletLaunchPointPositions)
+    {
+        transform.localPosition = offsetPosition;
+
+        Vector3 weaponImagePosition = transform.position; //武器画像のワールド座標を取得
+
+        foreach (Vector3 position in bulletLaunchPointPositions)//弾丸発射点オブジェクトを生成
+        {
+            GameObject newBulletLuanchPoint = (GameObject)Instantiate(playerBulletLaunchPointPrefab, weaponImagePosition + position, Quaternion.identity); //position の位置にbulletLaunchPointPrefabを生成する
+            newBulletLuanchPoint.transform.parent = weaponImagePrefab.transform; //武器画像の子オブジェクトとして生成
+        }
+
+    }
+    #endregion
+
+
+    #region//TrackingPlayerPosition(プレイヤー座標の追跡)
+    private void TrackingPlayerPosition(Transform transform , Vector3 playerPosition)
+    {
+        transform.position = playerPosition;
+    }
+    #endregion
+
+
+    
+    #region//GenerateWeaponBulletLaunchPoints(弾丸発射ポイントの生成)
+    private void GenerateWeaponBulletLaunchPoints()
+    {
+        Vector3 weaponImagePosition = weaponImageTransform.position; //武器画像のワールド座標を取得
+
+        foreach (Vector3 position in WeaponDatabase.Entity.weaponDataList[GlobalSO.Entity.playerSelectWeaponID].playerBulletLaunchPointPositions)//弾丸発射点オブジェクトを生成
+        {
+            GameObject newBulletLuanchPoint = (GameObject)Instantiate(playerWeaponBulletLaunchPointPrefab, weaponImagePosition + position, Quaternion.identity); //position の位置にbulletLaunchPointPrefabを生成する
+            newBulletLuanchPoint.transform.parent = weaponImageTransform; //武器画像の子オブジェクトとして生成
+
+            Dungeon_BulletManager bulletManager = newBulletLuanchPoint.GetComponent<Dungeon_BulletManager>();
+            bulletManager.weaponSO = WeaponDatabase.Entity.weaponDataList[GlobalSO.Entity.playerSelectWeaponID];
+            bulletManager.parentTransform = transform;
+        }
+
+    }
+    #endregion
+
+
+    */
+
+}
