@@ -1,0 +1,83 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+
+[CreateAssetMenu(menuName = "Original/DataBaseElements/WeaponSO")]
+[SerializeField]
+public class WeaponSO : MoveObjectSO
+{
+
+    [Header("弾体のオブジェクト")]
+    public GameObject BulletObject;
+
+    [Header("初期装弾数")]
+    public int AmmoCapacity;
+
+    [Header("総ダメージ量")]
+    public float BulletDamage;
+
+    [Header("防御無視ダメージ(総ダメージ以下)")]
+    public int BulletPureDamage;
+
+    [Header("ノックバックパワー")]
+    public float BulletKnockBackPower;
+
+    [Header("同時発射弾体数")]
+    public int BulletNum;
+
+    [Header("各弾体拡散角度")]
+    public float BulletSpreadDeg;
+
+    [Header("秒感発射数")]
+    public float FireRate;
+
+    [Header("リロード時間")]
+    public float ReloadTime;
+
+
+
+    [Header("弾の敵検知範囲")]
+    public float BulletEnemyDetectionRange;
+
+    [Header("敵検知時の弾体調整角度(ラジアン)")]
+    public float BulletAngleAdjustDeg;
+
+
+
+    [Header("跳弾上限数")]
+    public int BulletRicochetValue;
+
+    [Header("貫通上限数")]
+    public int BulletPenetrationValue;
+
+    [Header("爆発範囲")]
+    public float BulletBlastRange;
+
+    [Header("爆発ダメージ割合(元のダメージの何パーセントを範囲ダメージとするか)")]
+    public float BulletBlastDamageRate;
+
+    [Header("弾体加速度")]
+    public float BulletAcceleration;
+
+    [Header("チャージ可能時間")]
+    public float WeaponChargeTime;
+
+    [Header("チャージ後最大ダメージ増加率(単位：％)")]
+    public float WeaponChargedDamageRate;
+
+
+
+    [Header("武器出現時のプレイヤーとの距離")]
+    public Vector3 DistanceFromPlayer;
+
+    [Header("武器イラストの拡大率")]
+    public Vector3 ImageSize;
+
+    [Header("弾丸発射ポイントの初期座標")]
+    public Vector3[] BulletLaunchPointPositions;
+
+    [Header("照準方向に応じて武器画像も回転させる")]
+    public bool IsRotateWeaponImage;
+
+}
