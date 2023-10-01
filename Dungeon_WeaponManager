@@ -1,0 +1,154 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using System.Threading;
+using System.Threading.Tasks;
+using UnityEngine.UI;
+
+public class Dungeon_WeaponManager : MonoBehaviour
+{
+
+    #region//Field
+    WeaponSO weaponSO;
+    #endregion
+
+
+    #region//アセットロード用handle
+    AsyncOperationHandle<Sprite> weaponImageSpriteHandle;
+    #endregion
+
+
+    #region//GameObject
+    [SerializeField] public GameObject weaponImage;
+    [SerializeField] public GameObject playerWeaponBulletLaunchPointPrefab;
+    private Transform weaponImageTransform;
+    #endregion
+
+
+
+    #region//Start()
+    private void Start()
+    {
+
+        //アセットロード
+        var _ = LoadWeaponImage("WeaponImage_" + GlobalSO.Entity.playerSelectWeaponID);
+
+        weaponSO = WeaponDatabase.Entity.weaponDataList[GlobalSO.Entity.playerSelectWeaponID];
+
+        //武器の位置とサイズを初期化
+        weaponImageTransform = weaponImage.GetComponent<Transform>();
+        DebugLogger.Log("武器の画像Transform取得完了");
+        weaponImageTransform.localPosition = weaponSO.DistanceFromPlayer;
+        weaponImageTransform.localScale = weaponSO.ImageSize;
+        DebugLogger.Log("武器の画像TransformにWeaponSOの情報を反映");
+
+
+        //弾体発射用のGameObjectを生成する
+        OffsetWeaponPosition();
+    }
+    #endregion
+
+
+
+    #region//FixedUpdate()
+    private void FixedUpdate()
+    {
+        RotateWeapon(GlobalSO.Entity.playerCursorPosition);
+    }
+    #endregion
+
+
+
+    #region//アドレスで指定されたSpriteをweaponImageのSpriteRendererに読み込ませる
+    private async Task LoadWeaponImage(string address)
+    {
+
+        weaponImageSpriteHandle = Addressables.LoadAssetAsync<Sprite>(address);
+        await weaponImageSpriteHandle.Task;
+        switch (weaponImageSpriteHandle.Status)
+        {
+            case AsyncOperationStatus.Succeeded:
+                SpriteRenderer weaponImageSpriteRend = weaponImage.GetComponent<SpriteRenderer>();
+                weaponImageSpriteRend.sprite = weaponImageSpriteHandle.Result;
+                break;
+            case AsyncOperationStatus.Failed:
+                Debug.LogError("ロードがエラーになりました: [" + address + "] : Failed");
+                break;
+            default:
+                Debug.LogError("ロードがエラーになりました: ["+address+"] : default");
+                break;
+        }
+    }
+
+    #endregion
+
+
+
+    #region//RotateWeapon(武器の位置をプレイヤーを中心に、マウスの方向を向くように回転させる)
+    public void RotateWeapon(Vector2 mousePosition)
+    {
+
+        Transform weaponTransform = GetComponent<Transform>();
+
+        //プレイヤーキャラクターの3D座標と、マウスの位置の差分を取得する
+        float deltaX = mousePosition.x - weaponTransform.position.x;  //X座標差分
+        float deltaY = mousePosition.y - weaponTransform.position.y;  //Y座標差分
+
+        float rad = Mathf.Atan2(deltaY, deltaX);            //ラジアン角を取得
+        float weaponRotationDegree = rad * Mathf.Rad2Deg;                 //角度を算出
+
+        //プレイヤーの位置情報を基準に、武器オブジェクトそのものを回転させる
+        weaponTransform.rotation = Quaternion.Euler(0f, 0f, weaponRotationDegree);    //自転    
+
+        //もし武器イメージ回転がFALSEの場合、WeaponManagerの回転を打ち消す方向に回転させる
+        if (!weaponSO.IsRotateWeaponImage)
+        {
+            weaponImageTransform.localRotation = Quaternion.Euler(0f, 0f, -weaponRotationDegree);
+        }
+
+
+    }
+    #endregion
+
+
+
+    #region//OffsetWeaponPosition(武器画像と弾丸発射座標の位置調整)
+    private void OffsetWeaponPosition()
+    {
+
+        DebugLogger.Log("OffsetWeaponPosition開始");
+
+        DebugLogger.Log($"weaponSO.DistanceFromPlayer = {weaponSO.DistanceFromPlayer}");
+        weaponImageTransform.localPosition = weaponSO.DistanceFromPlayer;
+
+
+
+        Vector3 weaponImagePosition = weaponImageTransform.localPosition; //武器画像のワールド座標を取得
+
+        DebugLogger.Log($"武器画像のワールド座標 = {weaponImagePosition}");
+
+
+        foreach (Vector3 position in weaponSO.BulletLaunchPointPositions)//弾丸発射点オブジェクトを生成
+        {
+            DebugLogger.Log($"弾丸発射点オブジェクトの生成位置 = {weaponImagePosition + position}");
+            GameObject newBulletLuanchPoint = Instantiate(playerWeaponBulletLaunchPointPrefab, weaponImagePosition + position, Quaternion.identity); //position の位置にbulletLaunchPointPrefabを生成する
+            newBulletLuanchPoint.transform.parent = gameObject.transform; //武器画像の子オブジェクトとして生成
+        }
+        DebugLogger.Log("OffsetWeaponPosition終了");
+
+    }
+    #endregion
+
+
+
+
+    #region//OnApplicationQuit(アプリケーション終了時処理)
+    private void OnApplicationQuit()
+    {
+        Addressables.Release(weaponImageSpriteHandle);
+        DebugLogger.Log("OnApplicationQuit");
+    }
+    #endregion
+
