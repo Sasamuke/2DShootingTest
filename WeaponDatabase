@@ -1,0 +1,43 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using UnityEngine.ResourceManagement.AsyncOperations;
+
+[Serializable]
+[CreateAssetMenu(menuName = "Original/DataBase/WeaponDatabase")]
+public class WeaponDatabase : ScriptableObject
+{
+    public List<WeaponSO> weaponDataList = new List<WeaponSO>();
+
+    //MyScriptableObjectが保存してある場所のパス
+    public const string PATH = "ScriptableObjects/Weapon/WeaponDatabase";
+
+    //MyScriptableObjectの実体
+    private static WeaponDatabase _entity;
+
+    public static WeaponDatabase Entity
+    {
+        get
+        {
+            //初アクセス時にロードする
+            if (_entity == null)
+            {
+                _entity = Resources.Load<WeaponDatabase>(PATH);
+
+                //ロード出来なかった場合はエラーログを表示
+                if (_entity == null)
+                {
+                    Debug.LogError(PATH + " not found");
+                }
+            }
+
+            return _entity;
+        }
+    }
+
+
+
+}
